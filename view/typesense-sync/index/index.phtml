@@ -1,0 +1,88 @@
+<?php
+/**
+ * Typesense Sync admin page.
+ *
+ * Read-only apart from the trigger button. Settings are written from the module
+ * configuration form and nowhere else, so there is one code path handling the
+ * credential instead of two.
+ *
+ * Available: $endpoint, $hasKey, $configured, $lastSync, $csrfToken
+ */
+$this->htmlElement('body')->appendAttribute('class', 'typesense-sync');
+$this->headTitle($this->translate('Typesense Sync'));
+
+$configureUrl = $this->url(
+    'admin/default',
+    ['controller' => 'module', 'action' => 'configure'],
+    ['query' => ['id' => 'TypesenseSync']]
+);
+?>
+
+<?php echo $this->pageTitle($this->translate('Typesense Sync')); ?>
+
+<div class="typesense-sync-content">
+    <p><?php echo $this->translate('Rebuild the external search index from Omeka.'); ?></p>
+
+    <h3><?php echo $this->translate('Configuration'); ?></h3>
+
+    <div class="field">
+        <div class="field-meta">
+            <span class="label"><?php echo $this->translate('Sync endpoint'); ?></span>
+        </div>
+        <div class="inputs">
+            <?php if ($endpoint): ?>
+                <code><?php echo $this->escapeHtml($endpoint); ?></code>
+            <?php else: ?>
+                <em><?php echo $this->translate('Not set'); ?></em>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <div class="field">
+        <div class="field-meta">
+            <span class="label"><?php echo $this->translate('API key'); ?></span>
+        </div>
+        <div class="inputs">
+            <?php echo $hasKey
+                ? $this->translate('Set')
+                : '<em>' . $this->translate('Not set') . '</em>'; ?>
+        </div>
+    </div>
+
+    <p>
+        <a class="button" href="<?php echo $this->escapeHtml($configureUrl); ?>">
+            <?php echo $this->translate('Edit configuration'); ?>
+        </a>
+    </p>
+
+    <hr style="margin: 30px 0;" />
+
+    <h3><?php echo $this->translate('Trigger sync'); ?></h3>
+
+    <?php if ($lastSync): ?>
+        <p>
+            <strong><?php echo $this->translate('Last sync:'); ?></strong>
+            <?php echo $this->escapeHtml($lastSync); ?>
+        </p>
+    <?php endif; ?>
+
+    <?php if (!$configured): ?>
+        <div class="messages">
+            <div class="error">
+                <p><?php echo $this->translate('Set the sync endpoint before triggering a sync.'); ?></p>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <form method="post" action="<?php echo $this->url('admin/typesense-sync/trigger'); ?>">
+        <input type="hidden" name="csrf" value="<?php echo $this->escapeHtmlAttr($csrfToken); ?>" />
+        <button type="submit" class="button" <?php echo $configured ? '' : 'disabled'; ?>
+            onclick="return confirm('<?php echo $this->escapeJs($this->translate('Trigger a sync now? This may take a few minutes.')); ?>');">
+            <?php echo $this->translate('Sync to Typesense now'); ?>
+        </button>
+    </form>
+
+    <p class="explanation">
+        <?php echo $this->translate('Sends an empty POST to the configured endpoint, which rebuilds the index from Omeka.'); ?>
+    </p>
+</div>
