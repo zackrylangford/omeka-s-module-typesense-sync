@@ -42,6 +42,14 @@ The stored key is **never sent back to the browser.** The field posts a new
 value, or, left blank, keeps the one already stored. Removing a key is a separate
 explicit checkbox, since blank already means "unchanged".
 
+Because of that the field is empty every time you open the form, which looks
+exactly like a failed save. The form therefore reports a **fingerprint** — the
+first eight characters of the key's SHA-256 — so you can confirm a key is stored
+*and which one*, without the key itself ever reaching the page. After rotating,
+compare the fingerprint against the value you generated. A hash prefix rather
+than the key's own last few characters: those would disclose part of the secret
+for the same benefit.
+
 The module's own admin page is read-only apart from the trigger button. Settings
 are written from the configuration form and nowhere else, so there is one code
 path handling the credential rather than two.

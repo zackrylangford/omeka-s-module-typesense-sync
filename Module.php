@@ -41,7 +41,8 @@ class Module extends AbstractModule
     {
         $settings = $this->getServiceLocator()->get('Omeka\Settings');
         $endpoint = (string) $settings->get(self::SETTING_ENDPOINT, '');
-        $hasKey = trim((string) $settings->get(self::SETTING_API_KEY, '')) !== '';
+        $storedKey = trim((string) $settings->get(self::SETTING_API_KEY, ''));
+        $hasKey = $storedKey !== '';
 
         $e = fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
 
@@ -62,7 +63,24 @@ class Module extends AbstractModule
         $html .= '<div class="inputs"><input type="password" size="45" name="' . self::SETTING_API_KEY . '"'
             . ' id="' . self::SETTING_API_KEY . '" value="" autocomplete="new-password"'
             . ' placeholder="' . ($hasKey ? 'Set — leave blank to keep' : 'Not set') . '" /></div>';
-        $html .= '<p class="explanation">Sent as the <code>x-api-key</code> header. '
+        // The field is empty after every save, because the stored key is never
+        // sent to the browser — so an administrator who has just pasted a key in
+        // and saved sees a blank field and reasonably concludes it did not take.
+        // The placeholder alone was too quiet to carry that.
+        //
+        // A fingerprint is the strong signal: it confirms a key is stored, and
+        // confirms *which* one, so a rotation can be checked against the value
+        // that was generated. A hash prefix rather than the key's own last few
+        // characters — those would disclose part of the secret for the same
+        // benefit.
+        $html .= '<p class="explanation">';
+        $html .= $hasKey
+            ? '<strong>Stored:</strong> a key is set, fingerprint <code>'
+                . substr(hash('sha256', $storedKey), 0, 8) . '</code>. '
+                . 'The field above is blank because the key itself is never sent to '
+                . 'the browser — that is expected, not a failed save. '
+            : '<strong>Stored:</strong> no key. ';
+        $html .= 'Sent as the <code>x-api-key</code> header. '
             . 'Leave blank to keep the current key.</p>';
         $html .= '</div>';
 
